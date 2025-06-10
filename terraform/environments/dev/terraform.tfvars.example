@@ -1,0 +1,8 @@
+ssh_host = 
+ssh_user = 
+ssh_password = 
+ssh_port = 
+remote_dir =   # 指定你想要的目錄 指定120上建立新的資料夾 pwd
+docker_compose_file = "../../../docker-compose.yml"
+env_file = "../../../env/.env.remote"
+db_env_file = "../../../env/.env.db"

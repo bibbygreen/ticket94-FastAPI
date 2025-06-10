@@ -1,0 +1,37 @@
+# Google Cloud project settings
+project_id = "GCP-project-id"
+region     = "asia-east1"
+zone       = "asia-east1-b"
+
+# Database settings
+database_name     = "database"
+database_user     = "user"
+database_password = "your-secure-password"
+
+# Storage settings
+storage_bucket_name = "storage-bucket"
+storage_class       = "STANDARD"
+storage_location    = "ASIA"
+
+# Redis settings
+redis_tier           = "BASIC"
+redis_memory_size_gb = 1
+redis_version        = "REDIS_7_0"
+
+# Cloud Run settings
+enable_cloud_run          = true  # Set to false to disable Cloud Run deployment
+cloud_run_service_name    = "backend-app"
+cloud_run_container_image = "asia-east1-docker.pkg.dev/<project_id>/<project_id>/backend-app:latest"
+cloud_run_container_port  = 8000
+cloud_run_min_instances   = 0
+cloud_run_max_instances   = 10
+cloud_run_cpu             = "1"
+cloud_run_memory          = "512Mi"
+cloud_run_timeout_seconds = 300
+cloud_run_concurrency     = 80
+
+# Application environment variables
+app_mode = "dev"  # Options: dev, test, prod
+secret_key = "your-secret-key-for-jwt-tokens"  # Required for JWT token generation
+algorithm = "HS256"  # JWT algorithm
+access_token_expire_minutes = 60

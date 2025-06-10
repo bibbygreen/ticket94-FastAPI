@@ -1,0 +1,63 @@
+# Ignore Git and version control files
+.git
+.gitignore
+
+# Ignore compiled Python files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore development-specific Python files
+*.egg-info
+*.eggs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ignore test files and directories
+tests
+
+# Ignore various IDE settings
+.vscode
+.idea
+*.swp
+*.swo
+*.sublime-workspace
+
+# Ignore logs
+logs
+*.log
+
+# Ignore data files
+data/
+*.csv
+*.json
+
+# Ignore Docker files
+Dockerfile*
+docker-compose.yml
+docker-compose.yml-example
+.dockerignore
+
+# Ignore ansible script
+ansible/
+
+# Ignore Virtual environment
+.venv/
+env/
+
+# Ignore pre-commit and ruff files
+.pre-commit-config.yaml
+.ruff_cache/
+
+# Ignore SonarQube
+sonar-project.properties
+
+# Ignore GNU Make
+Makefile
+
+# Ignore pyenv
+.python-version
+
+# Ignore README.md
+README.md

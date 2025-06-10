@@ -1,0 +1,11 @@
+all:
+  hosts:
+    server:
+      ansible_host: "{{ lookup('env', 'DEPLOY_PROD_SERVER_HOST') }}"
+      ansible_port: "{{ lookup('env', 'DEPLOY_PROD_SERVER_PORT') }}"
+      ansible_user: "{{ lookup('env', 'DEPLOY_PROD_SERVER_USER') }}"
+      ansible_ssh_private_key_file: "~/.ssh/ssh_private_key.pem"
+      docker_compose_path: "{{ lookup('env', 'DEPLOY_PROD_DOCKER_COMPOSE_PATH') }}"
+      CI_REGISTRY: "{{ lookup('env', 'CI_REGISTRY') }}"
+      CI_REGISTRY_USER: "{{ lookup('env', 'CI_REGISTRY_USER') }}"
+      CI_REGISTRY_PASSWORD: "{{ lookup('env', 'CI_REGISTRY_PASSWORD') }}"

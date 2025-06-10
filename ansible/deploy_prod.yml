@@ -1,0 +1,21 @@
+- name: Deploy to Production Environment
+  hosts: all
+  become: true
+  become_method: sudo
+  tasks:
+    - name: Show remote host
+      debug:
+        msg: 
+          - "the remote server is {{ ansible_host }}"
+          - "the port is {{ ansible_port }}"
+          - "docker_compose_path: {{ docker_compose_path }}" 
+    - name: Log into GitLab Container Registry
+      docker_login:
+        registry: "{{ CI_REGISTRY }}"
+        username: "{{ CI_REGISTRY_USER }}"
+        password: "{{ CI_REGISTRY_PASSWORD }}"
+
+    - name: Run docker-compose up
+      command: docker compose up -d
+      args:
+        chdir: "{{ docker_compose_path }}"

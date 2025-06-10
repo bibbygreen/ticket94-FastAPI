@@ -1,0 +1,9 @@
+# SSH deployment configuration
+ssh_host = ""
+ssh_user = ""
+ssh_private_key_path = "~/.ssh/id_rsa"  # Path to your private key file
+ssh_port = 22
+remote_dir = "/path/to/remote/directory"  # Specify your desired directory
+docker_compose_file = "../docker-compose.yml"
+env_file = "../env/.env.remote"
+db_env_file = "../env/.env.db"

@@ -1,0 +1,25 @@
+services:
+  test_db:       # 需要修改
+    container_name: test_db # 需要修改
+    image: postgres:16
+    command: postgres -c 'max_connections=250'
+    restart: always
+    env_file:
+      - ./env/.env.db
+    volumes:
+      - ./data/postgresql_data:/var/lib/postgresql/data # 資料庫docker刪掉，會備份
+    ports:
+      - "5432:5432" # 第一個需要修改
+
+  # backend:  # 需要修改
+  #   container_name: backend  # 需要修改
+  #   image: app # 需要修改
+  #   pull_policy: always
+  #   restart: always
+  #   ports:
+  #     - "8000:8000" # 需要修改
+  #   env_file:
+  #     - ./env/.env
+  #   depends_on:
+  #     - db          # 需要修改
+

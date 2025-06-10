@@ -1,0 +1,11 @@
+all:
+  hosts:
+    server:
+      ansible_host: "{{ lookup('env', 'DEPLOY_DEV_SERVER_HOST') }}"
+      ansible_port: "{{ lookup('env', 'DEPLOY_DEV_SERVER_PORT') }}"
+      ansible_user: "{{ lookup('env', 'DEPLOY_DEV_SERVER_USER') }}"
+      ansible_password: "{{ lookup('env', 'DEPLOY_DEV_SERVER_PASSWORD') }}"
+      docker_compose_path: "{{ lookup('env', 'DEPLOY_DEV_DOCKER_COMPOSE_PATH') }}"
+      CI_REGISTRY: "{{ lookup('env', 'CI_REGISTRY') }}"
+      CI_REGISTRY_USER: "{{ lookup('env', 'CI_REGISTRY_USER') }}"
+      CI_REGISTRY_PASSWORD: "{{ lookup('env', 'CI_REGISTRY_PASSWORD') }}"
