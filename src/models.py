@@ -5,7 +5,7 @@ from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import false, func
 
-from src.constants import Role, SeatStatus
+from src.constants import OrderStatus, PaymentMethod, Role, SeatStatus
 
 
 class Base(DeclarativeBase):
@@ -97,3 +97,33 @@ class Seat(Base):
     status: Mapped[str] = mapped_column(SqlEnum(SeatStatus), default=SeatStatus.VACANT)
     hold_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.user_id", ondelete="SET NULL"))
+
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    order_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True
+    )
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.event_id", ondelete="CASCADE"))
+    order_number: Mapped[str] = mapped_column(String(30), unique=True)  # e.g. ORD20250612001
+    status: Mapped[str] = mapped_column(SqlEnum(OrderStatus), default=OrderStatus.PENDING)
+    payment_method: Mapped[str | None] = mapped_column(SqlEnum(PaymentMethod), nullable=True)
+    total_amount: Mapped[float] = mapped_column(default=0.0)
+    paid_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    order_item_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.order_id", ondelete="CASCADE"))
+    ticket_type_id: Mapped[int] = mapped_column(ForeignKey("event_ticket_types.ticket_type_id"))
+    seat_id: Mapped[int | None] = mapped_column(
+        ForeignKey("seats.seat_id", ondelete="SET NULL")
+    )  # 若無選位可為 null
+    price: Mapped[float] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

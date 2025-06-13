@@ -15,6 +15,19 @@ class SeatStatus(str, Enum):
     RESERVED = "R"
 
 
+class OrderStatus(str, Enum):
+    PENDING = "PENDING"  # 尚未付款
+    PAID = "PAID"  # 已付款
+    CANCELED = "CANCELED"  # 使用者取消
+    EXPIRED = "EXPIRED"  # 鎖位逾時未付款
+
+
+class PaymentMethod(str, Enum):
+    CREDIT_CARD = "CREDIT_CARD"
+    IBON = "IBON"
+    LINE_PAY = "LINE_PAY"
+
+
 DEFAULT_ERROR_RESPONSE = {
     400: {
         "description": "Bad request",
