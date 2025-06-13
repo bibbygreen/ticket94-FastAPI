@@ -1,10 +1,11 @@
 from datetime import date, datetime, time
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import false, func
 
-from src.constants import Role
+from src.constants import Role, SeatStatus
 
 
 class Base(DeclarativeBase):
@@ -66,3 +67,33 @@ class EventTicketType(Base):
     max_purchase_limit: Mapped[int | None] = mapped_column(nullable=True)  # null 表示不限
     price: Mapped[float] = mapped_column(nullable=False)
     stock: Mapped[int] = mapped_column(nullable=False)
+
+
+class Section(Base):
+    __tablename__ = "sections"
+
+    section_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("events.event_id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(100), nullable=False)  # A區, VIP區...
+    ticket_type_id: Mapped[int] = mapped_column(ForeignKey("event_ticket_types.ticket_type_id"))
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)  # 前端排序用
+
+
+class SeatingRow(Base):
+    __tablename__ = "seating_rows"
+
+    row_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    section_id: Mapped[int] = mapped_column(ForeignKey("sections.section_id", ondelete="CASCADE"))
+    row_name: Mapped[str] = mapped_column(String(10))  # A, B, C...
+    row_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Seat(Base):
+    __tablename__ = "seats"
+
+    seat_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    row_id: Mapped[int] = mapped_column(ForeignKey("seating_rows.row_id", ondelete="CASCADE"))
+    seat_number: Mapped[str] = mapped_column(String(10))  # 01, 02, 03...
+    status: Mapped[str] = mapped_column(SqlEnum(SeatStatus), default=SeatStatus.VACANT)
+    hold_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey("users.user_id", ondelete="SET NULL"))

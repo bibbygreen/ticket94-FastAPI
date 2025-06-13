@@ -9,6 +9,12 @@ class Role(Enum):
     GUEST = 3
 
 
+class SeatStatus(str, Enum):
+    VACANT = "V"
+    TEMP_HOLD = "T"
+    RESERVED = "R"
+
+
 DEFAULT_ERROR_RESPONSE = {
     400: {
         "description": "Bad request",
