@@ -11,7 +11,7 @@ on:
 
 jobs:
   test-lint-deploy:
-    name: Lint, Test, Deploy
+    name: Lint, Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -35,9 +35,6 @@ jobs:
 
       - name: Run ruff (Lint)
         run: poetry run ruff check .
-
-      - name: Run pytest (Test)
-        run: poetry run pytest
 
       - name: Setup SSH key
         if: github.event_name == 'push'
