@@ -4,17 +4,42 @@ on:
   push:
     branches:
       - dev
+  pull_request:
+      - dev
+
 
 jobs:
-  deploy:
-    name: Deploy to Dev Server
+  test-lint-deploy:
+    name: Lint, Test, Deploy
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-ansi
+
+      - name: Run ruff (Lint)
+        run: poetry run ruff check .
+
+      - name: Run pytest (Test)
+        run: poetry run pytest
+
       - name: Setup SSH key
+        if: github.event_name == 'push'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
@@ -22,6 +47,7 @@ jobs:
           echo -e "Host vm-dev\n  HostName ${{ secrets.VM_HOST }}\n  User ${{ secrets.VM_USER }}\n  IdentityFile ~/.ssh/id_rsa\n  StrictHostKeyChecking no" > ~/.ssh/config
 
       - name: Deploy and restart Docker
+        if: github.event_name == 'push'
         run: |
           ssh vm-dev <<'EOF'
             set -e
