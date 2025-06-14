@@ -1,10 +1,6 @@
-from typing import Annotated, Literal
 from datetime import date, datetime, time
 
-from fastapi import Query
 from pydantic import BaseModel
-
-from src.schemas import BasicQueryParams
 
 
 class CreateEventRequest(BaseModel):
