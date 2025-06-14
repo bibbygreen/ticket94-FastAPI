@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "fastapi-template"
+name = "ticket94-fastapi"
 version = "0.1.0"
 description = ""
-authors = ["Will <willwu@chengchitech.com>"]
+authors = ["Yicyun <a20034425@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
