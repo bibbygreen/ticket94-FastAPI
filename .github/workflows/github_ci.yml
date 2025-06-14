@@ -1,0 +1,32 @@
+name: Deploy to Dev VM
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    name: Deploy to Dev Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          echo -e "Host vm-dev\n  HostName ${{ secrets.VM_HOST }}\n  User ${{ secrets.VM_USER }}\n  IdentityFile ~/.ssh/id_rsa\n  StrictHostKeyChecking no" > ~/.ssh/config
+
+      - name: Deploy and restart Docker
+        run: |
+          ssh vm-dev <<'EOF'
+            set -e
+            cd /home/a20034425/github/ticket94-FastAPI
+            git pull origin dev
+            docker compose down
+            docker compose up -d --build
+EOF
