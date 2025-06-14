@@ -184,3 +184,6 @@ override.tf.json
 # GCP
 service-key.json.terraform/
 service-key.json
+
+__pycache__/
+*.pyc
