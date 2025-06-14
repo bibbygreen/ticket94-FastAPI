@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.schemas import CreateUserRequest
 from src.auth.utils import get_password_hash, verify_password
 from src.config import settings
+from src.constants import Role
+from src.logger import logger
 from src.models import User
 
 
@@ -53,6 +55,33 @@ async def create_user(session: AsyncSession, user: CreateUserRequest) -> User:
 
     except Exception as e:
         session.rollback()
+        raise e
+
+
+async def create_admin_user(session: AsyncSession, user: CreateUserRequest) -> User:
+    try:
+        user.password = await get_password_hash(password=user.password)
+
+        insert_query = insert(User).values(
+            {
+                "account": user.account,
+                "password": user.password,
+                "role": Role.ADMIN.value,
+            }
+        )
+
+        await session.execute(insert_query)
+        await session.commit()
+
+        stmt = select(User.account).where(User.account == user.account)
+        result = await session.execute(stmt)
+        new_user = result.scalar_one()
+
+        return new_user
+
+    except Exception as e:
+        await session.rollback()
+        logger.exception("Failed to create user: %s", str(e))
         raise e
 
 
