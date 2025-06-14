@@ -1,4 +1,4 @@
-name: Deploy to Dev VM
+name: Deploy to Dev VM Server
 
 on:
   push:
