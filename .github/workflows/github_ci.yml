@@ -29,5 +29,5 @@ jobs:
             git pull origin dev
             docker compose down
             docker compose up -d --build
-            EOF
+EOF
 
