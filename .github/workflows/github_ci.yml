@@ -37,7 +37,7 @@ jobs:
         run: poetry run ruff check .
 
       - name: Run pytest (Test)
-        run: poetry run pytest
+        run: PYTHONPATH=./src poetry run pytest
 
       - name: Setup SSH key
         if: github.event_name == 'push'
