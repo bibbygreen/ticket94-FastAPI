@@ -29,7 +29,7 @@ async def get_current_user(
         if account is None:
             raise credentials_exception
 
-        user = get_user_by_account(session=session, account=account)
+        user = await get_user_by_account(session=session, account=account)
 
         if user is None:
             raise credentials_exception

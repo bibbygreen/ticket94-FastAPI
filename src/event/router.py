@@ -10,7 +10,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import get_admin_user, get_current_user
 from src.database import get_db_session
 from src.event.schemas import (
     CreateEventRequestByAdmin,
@@ -38,7 +38,7 @@ router = APIRouter(
 async def _create_event_by_admin(
     event_data: Annotated[CreateEventRequestByAdmin, Body()],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_admin_user)],
 ):
     try:
         await create_event_by_admin(
@@ -57,6 +57,7 @@ async def _create_event_by_admin(
 async def _get_event_detail_by_id(
     event_id: Annotated[int, Path()],
     session: Annotated[AsyncSession, Depends(get_db_session)],
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     try:
         return await get_event_detail_by_id(session=session, event_id=event_id)
@@ -72,7 +73,7 @@ async def _get_event_detail_by_id(
 async def _delete_event_by_admin(
     event_id: Annotated[int, Path()],
     session: Annotated[AsyncSession, Depends(get_db_session)],
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_admin_user)],
 ):
     try:
         await delete_event_by_admin(session=session, event_id=event_id, current_user=current_user)
