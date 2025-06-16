@@ -11,6 +11,7 @@ from src.event.schemas import (
 from src.models import (
     Event,
     EventPicture,
+    User,
 )
 
 
@@ -66,7 +67,9 @@ async def create_event_by_admin(
 
 
 async def get_event_detail_by_id(
-    session: AsyncSession, event_id: int
+    session: AsyncSession,
+    event_id: int,
+    current_user: User,
 ) -> GetEventDetailByIdResponse:
     try:
         stmt = (

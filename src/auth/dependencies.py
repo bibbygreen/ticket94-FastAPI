@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.auth.service import get_user_by_account
 from src.auth.utils import oauth2_scheme
 from src.config import settings
+from src.constants import Role
 from src.database import get_db_session
 from src.models import User
 
@@ -53,4 +54,13 @@ async def get_current_active_user(
 ):
     if current_user.is_disabled:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+    return current_user
+
+
+async def get_admin_user(current_user: Annotated[User, Depends(get_current_user)]):
+    if current_user.role != Role.ADMIN.value:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have the permission to access this resource",
+        )
     return current_user

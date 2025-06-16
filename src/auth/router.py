@@ -16,7 +16,7 @@ from src.auth.service import (
     authenticate_user,
     create_access_token,
     create_admin_user,
-    create_user,
+    create_customer_user,
     get_user_by_account,
 )
 from src.config import settings
@@ -63,10 +63,10 @@ async def register_admin(
 
 
 @router.post(
-    "/v1/register",
+    "/register/customer",
     response_model=Token,
 )
-async def register(
+async def register_customer(
     user_data: Annotated[CreateUserRequest, Body()],
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ):
@@ -78,12 +78,14 @@ async def register(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
             )
 
-        new_user = await create_user(session=session, user=user_data)
+        new_user = await create_customer_user(session=session, user=user_data)
 
+        if not isinstance(new_user, str):
+            raise ValueError("Failed to retrieve account as string")
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         access_token = create_access_token(
-            data={"sub": new_user.account}, expires_delta=access_token_expires
+            data={"sub": new_user}, expires_delta=access_token_expires
         )
 
         return Token(access_token=access_token)
@@ -97,7 +99,7 @@ async def register(
 
 
 @router.post(
-    "/v1/login",
+    "/login",
     response_model=Token,
 )
 async def login(
@@ -105,7 +107,7 @@ async def login(
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ):
     try:
-        user = authenticate_user(
+        user = await authenticate_user(
             session=session, account=form_data.username, password=form_data.password
         )
 
@@ -121,7 +123,3 @@ async def login(
         raise HTTPException(status_code=http_exc.status_code, detail=http_exc.detail) from http_exc
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"login error: {str(e)}",
-        ) from e
