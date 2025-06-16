@@ -24,6 +24,7 @@ def make_naive(dt: datetime | time) -> datetime | time:
 async def create_event_by_admin(
     session: AsyncSession,
     event_data: CreateEventRequestByAdmin,
+    current_user: User,
 ):
     try:
         result = await session.execute(
