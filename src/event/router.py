@@ -18,6 +18,7 @@ from src.event.schemas import (
 )
 from src.event.service import (
     create_event_by_admin,
+    delete_event_by_admin,
     get_event_detail_by_id,
 )
 from src.models import User
@@ -59,6 +60,23 @@ async def _get_event_detail_by_id(
 ):
     try:
         return await get_event_detail_by_id(session=session, event_id=event_id)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@router.delete(
+    "/admin/event/{event_id}",
+    response_model=DetailResponse,
+)
+async def _delete_event_by_admin(
+    event_id: Annotated[int, Path()],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    try:
+        await delete_event_by_admin(session=session, event_id=event_id, current_user=current_user)
+        return {"detail": "Event deleted successfully"}
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e

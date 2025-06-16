@@ -1,7 +1,7 @@
 from datetime import datetime, time
 
 from fastapi import HTTPException, status
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.event.schemas import (
@@ -97,6 +97,25 @@ async def get_event_detail_by_id(
         event = GetEventDetailByIdResponse(**data)
 
         return event
+
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+async def delete_event_by_admin(
+    session: AsyncSession,
+    event_id: int,
+    current_user: User,
+):
+    try:
+        await session.execute(
+            update(Event).values(is_deleted=True).where(Event.event_id == event_id)
+        )
+
+        await session.execute(delete(EventPicture).where(EventPicture.event_id == event_id))
+        await session.commit()
+        return {"detail": "Event deleted successfully"}
 
     except Exception as e:
         session.rollback()
