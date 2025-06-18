@@ -3,6 +3,13 @@ from datetime import date, datetime, time
 from pydantic import BaseModel, field_validator
 
 
+class TicketTypeCreateRequest(BaseModel):
+    ticket_name: str
+    max_purchase_limit: int | None = None
+    price: float
+    stock: int
+
+
 class CreateEventRequestByAdmin(BaseModel):
     event_name: str
     description: str
@@ -16,6 +23,7 @@ class CreateEventRequestByAdmin(BaseModel):
     category: str
     on_sale: bool
     picture_url: str
+    ticket_types: list[TicketTypeCreateRequest]
 
     @field_validator("sale_time", "sale_end_time", mode="before")
     def remove_tz(cls, v):
@@ -38,6 +46,20 @@ class CreateEventRequestByAdmin(BaseModel):
                     "category": "演唱會",
                     "on_sale": True,
                     "picture_url": "https://reurl.cc/AMV85",
+                    "ticket_types": [
+                        {
+                            "ticket_name": "一般票",
+                            "max_purchase_limit": 4,
+                            "price": 3000,
+                            "stock": 500,
+                        },
+                        {
+                            "ticket_name": "VIP票",
+                            "max_purchase_limit": 4,
+                            "price": 3800,
+                            "stock": 100,
+                        },
+                    ],
                 }
             ]
         },
