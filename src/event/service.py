@@ -11,6 +11,7 @@ from src.event.schemas import (
 from src.models import (
     Event,
     EventPicture,
+    EventTicketType,
     User,
 )
 
@@ -57,6 +58,22 @@ async def create_event_by_admin(
                 }
             )
         )
+
+        if not event_data.ticket_types:
+            raise HTTPException(status_code=400, detail="At least one ticket type is required")
+
+        ticket_type_values = [
+            {
+                "event_id": event_id,
+                "ticket_name": ticket.ticket_name,
+                "max_purchase_limit": ticket.max_purchase_limit,
+                "price": ticket.price,
+                "stock": ticket.stock,
+            }
+            for ticket in event_data.ticket_types
+        ]
+
+        await session.execute(insert(EventTicketType).values(ticket_type_values))
 
         await session.commit()
 
