@@ -11,6 +11,7 @@ from src.constants import DEFAULT_ERROR_RESPONSE
 from src.event.router import router as event_router
 from src.logger import logger
 from src.seat_init.router import router as seat_init_router
+from src.seat_management.router import router as seat_management_router
 
 
 @asynccontextmanager
@@ -65,3 +66,4 @@ async def health():
 app.include_router(user_router)
 app.include_router(event_router)
 app.include_router(seat_init_router)
+app.include_router(seat_management_router)
