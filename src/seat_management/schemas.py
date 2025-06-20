@@ -19,7 +19,6 @@ class SectionSeatMapResponse(BaseModel):
 
 class HoldSeatRequest(BaseModel):
     seat_ids: list[int]
-    hold_minutes: int = 10
 
 
 class ReleaseSeatRequest(BaseModel):

@@ -76,7 +76,7 @@ async def hold_seats(
 ):
     try:
         now = datetime.now()
-        hold_until = now + timedelta(minutes=request.minutes)
+        hold_until = now + timedelta(minutes=10)
 
         result = await session.execute(
             select(Seat)
@@ -130,7 +130,7 @@ async def release_seats(
         seats = result.scalars().all()
 
         for seat in seats:
-            if seat.status == SeatStatus.HOLD:
+            if seat.status == SeatStatus.TEMP_HOLD:
                 seat.status = SeatStatus.VACANT
                 seat.hold_expires_at = None
                 seat.user_id = None
@@ -159,7 +159,7 @@ async def confirm_seats(
             raise HTTPException(status_code=400, detail="Some seats not belong to user")
 
         for seat in seats:
-            if seat.status != SeatStatus.HOLD or seat.hold_expires_at < now:
+            if seat.status != SeatStatus.TEMP_HOLD or seat.hold_expires_at < now:
                 raise HTTPException(
                     status_code=400, detail=f"Seat {seat.seat_number} cannot be confirmed"
                 )
