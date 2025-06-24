@@ -2,7 +2,7 @@ from datetime import date, datetime, time
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SqlEnum
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import false, func
 
 from src.constants import OrderStatus, PaymentMethod, Role, SeatStatus
@@ -87,6 +87,8 @@ class SeatingRow(Base):
     row_name: Mapped[str] = mapped_column(String(10))  # A, B, C...
     row_order: Mapped[int] = mapped_column(Integer, default=0)
 
+    section = relationship("Section", backref="rows")
+
 
 class Seat(Base):
     __tablename__ = "seats"
@@ -97,6 +99,8 @@ class Seat(Base):
     status: Mapped[str] = mapped_column(SqlEnum(SeatStatus), default=SeatStatus.VACANT)
     hold_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.user_id", ondelete="SET NULL"))
+
+    row = relationship("SeatingRow", backref="seats")
 
 
 class Order(Base):

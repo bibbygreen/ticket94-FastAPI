@@ -4,8 +4,9 @@ from datetime import UTC, datetime
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from src.models import Order, OrderItem, Seat, SeatStatus
+from src.models import Order, OrderItem, Seat, SeatingRow, SeatStatus
 from src.order.schemas import CreateOrderRequest, CreateOrderResponse
 from src.tappay.schemas import TapPayCardHolder, TapPayPaymentRequest
 from src.tappay.service import process_tappay_payment
@@ -22,7 +23,9 @@ async def create_credit_card_order(
 ) -> CreateOrderResponse:
     # 1️⃣ 檢查所有座位仍屬於該使用者，且是 RESERVED 狀態
     result = await session.execute(
-        select(Seat).where(
+        select(Seat)
+        .options(selectinload(Seat.row).selectinload(SeatingRow.section))
+        .where(
             Seat.seat_id.in_(request.seat_ids),
             Seat.user_id == user_id,
             Seat.status == SeatStatus.RESERVED,
@@ -73,7 +76,7 @@ async def create_credit_card_order(
         )
         session.add(order_item)
 
-        seat.status = SeatStatus.SOLD
+        seat.status = SeatStatus.SOLD.value
         seat.hold_expires_at = None
         seat.user_id = None
 
