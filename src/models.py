@@ -1,11 +1,10 @@
 from datetime import date, datetime, time
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
-from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import false, func
 
-from src.constants import OrderStatus, PaymentMethod, Role, SeatStatus
+from src.constants import Role
 
 
 class Base(DeclarativeBase):
@@ -96,7 +95,7 @@ class Seat(Base):
     seat_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     row_id: Mapped[int] = mapped_column(ForeignKey("seating_rows.row_id", ondelete="CASCADE"))
     seat_number: Mapped[str] = mapped_column(String(10))  # 01, 02, 03...
-    status: Mapped[str] = mapped_column(SqlEnum(SeatStatus), default=SeatStatus.VACANT)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
     hold_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.user_id", ondelete="SET NULL"))
 
@@ -112,8 +111,8 @@ class Order(Base):
     )
     event_id: Mapped[int] = mapped_column(ForeignKey("events.event_id", ondelete="CASCADE"))
     order_number: Mapped[str] = mapped_column(String(30), unique=True)  # e.g. ORD20250612001
-    status: Mapped[str] = mapped_column(SqlEnum(OrderStatus), default=OrderStatus.PENDING)
-    payment_method: Mapped[str | None] = mapped_column(SqlEnum(PaymentMethod), nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    payment_method: Mapped[str] = mapped_column(String(20), nullable=False)
     total_amount: Mapped[float] = mapped_column(default=0.0)
     paid_at: Mapped[datetime | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

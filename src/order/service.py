@@ -6,7 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.models import Order, OrderItem, Seat, SeatingRow, SeatStatus
+from src.constants import SeatStatus
+from src.models import Order, OrderItem, Seat, SeatingRow
 from src.order.schemas import CreateOrderRequest, CreateOrderResponse
 from src.tappay.schemas import TapPayCardHolder, TapPayPaymentRequest
 from src.tappay.service import process_tappay_payment
