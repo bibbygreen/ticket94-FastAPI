@@ -11,7 +11,7 @@ async def process_tappay_payment(request: TapPayPaymentRequest) -> TapPayPayment
         "merchant_id": settings.MERCHANT_ID,
         "details": "Ticketing Payment",
         "amount": request.amount,
-        "cardholder": request.cardholder.dict(),
+        "cardholder": request.cardholder.model_dump(),
         "remember": False,
     }
     headers = {
