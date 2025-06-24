@@ -13,6 +13,7 @@ class SeatStatus(str, Enum):
     VACANT = "V"
     TEMP_HOLD = "T"
     RESERVED = "R"
+    SOLD = "S"
 
 
 class OrderStatus(str, Enum):

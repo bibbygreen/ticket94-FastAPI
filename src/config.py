@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     # DB
     DATABASE_URL: str
 
+    # Tappay
+    PARTNER_KEY: str
+    MERCHANT_ID: str
+
     model_config = SettingsConfigDict(env_file="./env/.env")
 
 
