@@ -10,10 +10,10 @@ class Role(Enum):
 
 
 class SeatStatus(str, Enum):
-    VACANT = "V"
-    TEMP_HOLD = "T"
-    RESERVED = "R"
-    SOLD = "S"
+    VACANT = "VACANT"
+    TEMP_HOLD = "TEMP_HOLD"
+    RESERVED = "RESERVED"
+    SOLD = "SOLD"
 
 
 class OrderStatus(str, Enum):
