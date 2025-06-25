@@ -61,3 +61,18 @@ class MyOrderListResponse(BaseModel):
             }
         }
     }
+
+
+class SeatDetail(BaseModel):
+    section_name: str
+    row_name: str
+    seat_number: str
+
+
+class OrderDetailResponse(BaseModel):
+    order_number: str
+    status: str
+    total_amount: float
+    payment_method: str
+    paid_at: datetime | None
+    seats: list[SeatDetail]

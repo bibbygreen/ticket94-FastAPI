@@ -77,6 +77,9 @@ class Section(Base):
     ticket_type_id: Mapped[int] = mapped_column(ForeignKey("event_ticket_types.ticket_type_id"))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)  # 前端排序用
 
+    rows = relationship("SeatingRow", back_populates="section")
+    ticket_type = relationship("EventTicketType")
+
 
 class SeatingRow(Base):
     __tablename__ = "seating_rows"
@@ -86,7 +89,8 @@ class SeatingRow(Base):
     row_name: Mapped[str] = mapped_column(String(10))  # A, B, C...
     row_order: Mapped[int] = mapped_column(Integer, default=0)
 
-    section = relationship("Section", backref="rows")
+    section = relationship("Section", back_populates="rows")
+    seats = relationship("Seat", back_populates="row")
 
 
 class Seat(Base):
@@ -99,7 +103,8 @@ class Seat(Base):
     hold_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.user_id", ondelete="SET NULL"))
 
-    row = relationship("SeatingRow", backref="seats")
+    row = relationship("SeatingRow", back_populates="seats")
+    order_items = relationship("OrderItem", back_populates="seat")
 
 
 class Order(Base):
@@ -118,6 +123,8 @@ class Order(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
 
+    order_items = relationship("OrderItem", back_populates="order")
+
 
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -130,3 +137,7 @@ class OrderItem(Base):
     )  # 若無選位可為 null
     price: Mapped[float] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    seat = relationship("Seat", back_populates="order_items")
+    ticket_type = relationship("EventTicketType")
+    order = relationship("Order", back_populates="order_items")

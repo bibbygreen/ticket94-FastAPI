@@ -16,10 +16,12 @@ from src.order.schemas import (
     CreateOrderRequest,
     CreateOrderResponse,
     MyOrderListResponse,
+    OrderDetailResponse,
 )
 from src.order.service import (
     create_credit_card_order,
     get_my_orders,
+    get_order_detail,
 )
 
 router = APIRouter(
@@ -56,6 +58,23 @@ async def _get_my_orders(
 ):
     try:
         return await get_my_orders(session=session, current_user=current_user)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@router.get("/orders/{order_number}", response_model=OrderDetailResponse)
+async def _get_order_detail(
+    order_number: Annotated[str, Path()],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    try:
+        return await get_order_detail(
+            order_number=order_number,
+            session=session,
+            current_user=current_user,
+        )
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e

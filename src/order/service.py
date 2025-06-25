@@ -13,6 +13,8 @@ from src.order.schemas import (
     CreateOrderResponse,
     MyOrderListItem,
     MyOrderListResponse,
+    OrderDetailResponse,
+    SeatDetail,
 )
 from src.tappay.schemas import TapPayCardHolder, TapPayPaymentRequest
 from src.tappay.service import process_tappay_payment
@@ -117,6 +119,57 @@ async def get_my_orders(
 
         return MyOrderListResponse(
             orders=response_orders,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+async def get_order_detail(
+    order_number: str,
+    session: AsyncSession,
+    current_user: User,
+):
+    try:
+        result = await session.execute(
+            select(Order).where(
+                Order.order_number == order_number,
+                Order.user_id == current_user.user_id,
+            )
+        )
+        order = result.scalar_one_or_none()
+
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+        result_items = await session.execute(
+            select(OrderItem)
+            .options(
+                selectinload(OrderItem.seat).selectinload(Seat.row).selectinload(SeatingRow.section)
+            )
+            .where(OrderItem.order_id == order.order_id)
+        )
+
+        order_items = result_items.scalars().all()
+
+        seats = []
+
+        for item in order_items:
+            if item.seat:
+                seats.append(
+                    SeatDetail(
+                        section_name=item.seat.row.section.name,
+                        row_name=item.seat.row.row_name,
+                        seat_number=item.seat.seat_number,
+                    )
+                )
+
+        return OrderDetailResponse(
+            order_number=order.order_number,
+            status=order.status,
+            payment_method=order.payment_method,
+            total_amount=order.total_amount,
+            paid_at=order.paid_at,
+            seats=seats,
         )
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
