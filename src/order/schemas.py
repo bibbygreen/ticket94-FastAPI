@@ -91,3 +91,15 @@ class OrderDetailResponse(BaseModel):
     payment_method: str
     paid_at: datetime | None
     seats: list[SeatDetail]
+
+
+class GetEventOrderListByAdminQueryParams(BasicQueryParams):
+    order_number: Annotated[str | None, Query()] = None
+    status: Annotated[str | None, Query()] = None
+
+    sort_by: Annotated[
+        Literal["created_at", "updated_at"],
+        Query(description="Field to sort by", examples=["created_at"]),
+    ] = "created_at"
+
+    model_config = {"extra": "forbid"}

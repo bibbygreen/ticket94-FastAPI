@@ -11,6 +11,7 @@ from src.models import Order, OrderItem, Seat, SeatingRow, User
 from src.order.schemas import (
     CreateOrderRequest,
     CreateOrderResponse,
+    GetEventOrderListByAdminQueryParams,
     GetMyOrderListQueryParams,
     MyOrderListItem,
     MyOrderListResponse,
@@ -198,5 +199,70 @@ async def get_order_detail(
             paid_at=order.paid_at,
             seats=seats,
         )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+async def get_event_orders_by_admin(
+    event_id: int,
+    query_params: GetEventOrderListByAdminQueryParams,
+    session: AsyncSession,
+    current_user: User,
+) -> PaginatedDataResponse[MyOrderListItem]:
+    try:
+        page = query_params.page
+        page_size = query_params.page_size
+        order_by = query_params.order_by
+
+        valid_sort_fields = {"created_at", "updated_at"}
+        if query_params.sort_by not in valid_sort_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort_by field: {query_params.sort_by}",
+            )
+
+        sort_column = getattr(Order, query_params.sort_by)
+        order_expression = asc if order_by == "asc" else desc
+
+        filters = [Order.event_id == event_id]
+
+        if query_params.order_number:
+            filters.append(Order.order_number == query_params.order_number)
+
+        if query_params.status:
+            filters.append(Order.status == query_params.status)
+
+        offset = (page - 1) * page_size
+        count_stmt = select(func.count()).select_from(Order).where(*filters)
+        total_count_result = await session.execute(count_stmt)
+        total_count = total_count_result.scalar_one()
+
+        result = await session.execute(
+            select(Order)
+            .where(*filters)
+            .order_by(order_expression(sort_column))
+            .offset(offset)
+            .limit(page_size)
+        )
+        orders = result.scalars().all()
+
+        response_orders = [
+            MyOrderListItem(
+                order_number=order.order_number,
+                status=order.status,
+                total_amount=order.total_amount,
+                paid_at=order.paid_at,
+            )
+            for order in orders
+        ]
+        total_pages = (total_count + page_size - 1) // page_size
+
+        return PaginatedDataResponse[MyOrderListItem](
+            total_count=total_count,
+            total_pages=total_pages,
+            current_page=page,
+            data=response_orders,
+        )
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
