@@ -1,14 +1,19 @@
 import random
 from datetime import UTC, datetime
 
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.constants import SeatStatus
-from src.models import Order, OrderItem, Seat, SeatingRow
-from src.order.schemas import CreateOrderRequest, CreateOrderResponse
+from src.models import Order, OrderItem, Seat, SeatingRow, User
+from src.order.schemas import (
+    CreateOrderRequest,
+    CreateOrderResponse,
+    MyOrderListItem,
+    MyOrderListResponse,
+)
 from src.tappay.schemas import TapPayCardHolder, TapPayPaymentRequest
 from src.tappay.service import process_tappay_payment
 
@@ -86,3 +91,32 @@ async def create_credit_card_order(
     return CreateOrderResponse(
         order_number=order_number, payment_status="SUCCESS", payment_message="付款成功"
     )
+
+
+async def get_my_orders(
+    session: AsyncSession,
+    current_user: User,
+) -> MyOrderListResponse:
+    try:
+        result = await session.execute(
+            select(Order)
+            .where(Order.user_id == current_user.user_id)
+            .order_by(Order.created_at.desc())
+        )
+        orders = result.scalars().all()
+
+        response_orders = [
+            MyOrderListItem(
+                order_number=order.order_number,
+                status=order.status,
+                total_amount=order.total_amount,
+                paid_at=order.paid_at,
+            )
+            for order in orders
+        ]
+
+        return MyOrderListResponse(
+            orders=response_orders,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
