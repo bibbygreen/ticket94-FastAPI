@@ -5,22 +5,29 @@ from fastapi import (
     Depends,
     HTTPException,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import get_admin_user, get_current_user
 from src.database import get_db_session
 from src.models import User
 from src.order.schemas import (
     CreateOrderRequest,
     CreateOrderResponse,
-    MyOrderListResponse,
+    GetEventOrderListByAdminQueryParams,
+    GetMyOrderListQueryParams,
+    MyOrderListItem,
+    OrderDetailResponse,
 )
 from src.order.service import (
     create_credit_card_order,
+    get_event_orders_by_admin,
     get_my_orders,
+    get_order_detail,
 )
+from src.schemas import PaginatedDataResponse
 
 router = APIRouter(
     tags=["order"],
@@ -49,13 +56,54 @@ async def _create_credit_card_order(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
-@router.get("/orders/my", response_model=MyOrderListResponse)
+@router.get("/orders/my", response_model=PaginatedDataResponse[MyOrderListItem])
 async def _get_my_orders(
+    query_params: Annotated[GetMyOrderListQueryParams, Query()],
     session: Annotated[AsyncSession, Depends(get_db_session)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     try:
-        return await get_my_orders(session=session, current_user=current_user)
+        return await get_my_orders(
+            query_params=query_params, session=session, current_user=current_user
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@router.get("/orders/{order_number}", response_model=OrderDetailResponse)
+async def _get_order_detail(
+    order_number: Annotated[str, Path()],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    try:
+        return await get_order_detail(
+            order_number=order_number,
+            session=session,
+            current_user=current_user,
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@router.get(
+    "/admin/events/{event_id}/orders", response_model=PaginatedDataResponse[MyOrderListItem]
+)
+async def _get_event_orders_by_admin(
+    event_id: Annotated[int, Path()],
+    query_params: Annotated[GetEventOrderListByAdminQueryParams, Query()],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+    current_user: Annotated[User, Depends(get_admin_user)],
+):
+    try:
+        return await get_event_orders_by_admin(
+            event_id=event_id,
+            query_params=query_params,
+            session=session,
+            current_user=current_user,
+        )
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e

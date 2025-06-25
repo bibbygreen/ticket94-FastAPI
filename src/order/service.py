@@ -2,7 +2,7 @@ import random
 from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -11,8 +11,15 @@ from src.models import Order, OrderItem, Seat, SeatingRow, User
 from src.order.schemas import (
     CreateOrderRequest,
     CreateOrderResponse,
+    GetEventOrderListByAdminQueryParams,
+    GetMyOrderListQueryParams,
     MyOrderListItem,
     MyOrderListResponse,
+    OrderDetailResponse,
+    SeatDetail,
+)
+from src.schemas import (
+    PaginatedDataResponse,
 )
 from src.tappay.schemas import TapPayCardHolder, TapPayPaymentRequest
 from src.tappay.service import process_tappay_payment
@@ -27,7 +34,6 @@ def generate_order_number() -> str:
 async def create_credit_card_order(
     session: AsyncSession, user_id: int, event_id: int, request: CreateOrderRequest
 ) -> CreateOrderResponse:
-    # 1️⃣ 檢查所有座位仍屬於該使用者，且是 RESERVED 狀態
     result = await session.execute(
         select(Seat)
         .options(selectinload(Seat.row).selectinload(SeatingRow.section))
@@ -44,7 +50,6 @@ async def create_credit_card_order(
             status_code=400, detail="Some seats are not reserved or not belong to user"
         )
 
-    # 2️⃣ 呼叫 Tappay 金流進行付款
     tappay_result = await process_tappay_payment(
         TapPayPaymentRequest(
             prime=request.prime,
@@ -56,7 +61,6 @@ async def create_credit_card_order(
     if tappay_result.status != 0:
         raise HTTPException(status_code=400, detail=f"付款失敗: {tappay_result.msg}")
 
-    # 3️⃣ 付款成功，建立訂單與訂單明細
     order_number = generate_order_number()
     now = datetime.now(tz=UTC).replace(tzinfo=None)
 
@@ -72,13 +76,12 @@ async def create_credit_card_order(
     session.add(new_order)
     await session.flush()
 
-    # 4️⃣ 建立 order_items，並將座位轉為 SOLD
     for seat in seats:
         order_item = OrderItem(
             order_id=new_order.order_id,
             ticket_type_id=seat.row.section.ticket_type_id,
             seat_id=seat.seat_id,
-            price=request.amount,  # 假設價格前端計算正確傳入
+            price=request.amount,
         )
         session.add(order_item)
 
@@ -94,14 +97,36 @@ async def create_credit_card_order(
 
 
 async def get_my_orders(
+    query_params: GetMyOrderListQueryParams,
     session: AsyncSession,
     current_user: User,
-) -> MyOrderListResponse:
+) -> PaginatedDataResponse[MyOrderListResponse]:
     try:
+        page = query_params.page
+        page_size = query_params.page_size
+        order_by = query_params.order_by
+
+        valid_sort_fields = {"created_at", "updated_at"}
+        if query_params.sort_by not in valid_sort_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort_by field: {query_params.sort_by}",
+            )
+
+        sort_column = getattr(Order, query_params.sort_by)
+        order_expression = asc if order_by == "asc" else desc
+        offset = (page - 1) * page_size
+
+        count_stmt = select(func.count()).select_from(Order)
+        total_count_result = await session.execute(count_stmt)
+        total_count = total_count_result.scalar_one()
+
         result = await session.execute(
             select(Order)
             .where(Order.user_id == current_user.user_id)
-            .order_by(Order.created_at.desc())
+            .order_by(order_expression(sort_column))
+            .offset(offset)
+            .limit(page_size)
         )
         orders = result.scalars().all()
 
@@ -114,9 +139,130 @@ async def get_my_orders(
             )
             for order in orders
         ]
+        total_pages = (total_count + page_size - 1) // page_size
 
-        return MyOrderListResponse(
-            orders=response_orders,
+        return PaginatedDataResponse[MyOrderListItem](
+            total_count=total_count,
+            total_pages=total_pages,
+            current_page=page,
+            data=response_orders,
         )
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+async def get_order_detail(
+    order_number: str,
+    session: AsyncSession,
+    current_user: User,
+):
+    try:
+        result = await session.execute(
+            select(Order).where(
+                Order.order_number == order_number,
+                Order.user_id == current_user.user_id,
+            )
+        )
+        order = result.scalar_one_or_none()
+
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+        result_items = await session.execute(
+            select(OrderItem)
+            .options(
+                selectinload(OrderItem.seat).selectinload(Seat.row).selectinload(SeatingRow.section)
+            )
+            .where(OrderItem.order_id == order.order_id)
+        )
+
+        order_items = result_items.scalars().all()
+
+        seats = []
+
+        for item in order_items:
+            if item.seat:
+                seats.append(
+                    SeatDetail(
+                        section_name=item.seat.row.section.name,
+                        row_name=item.seat.row.row_name,
+                        seat_number=item.seat.seat_number,
+                    )
+                )
+
+        return OrderDetailResponse(
+            order_number=order.order_number,
+            status=order.status,
+            payment_method=order.payment_method,
+            total_amount=order.total_amount,
+            paid_at=order.paid_at,
+            seats=seats,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+async def get_event_orders_by_admin(
+    event_id: int,
+    query_params: GetEventOrderListByAdminQueryParams,
+    session: AsyncSession,
+    current_user: User,
+) -> PaginatedDataResponse[MyOrderListItem]:
+    try:
+        page = query_params.page
+        page_size = query_params.page_size
+        order_by = query_params.order_by
+
+        valid_sort_fields = {"created_at", "updated_at"}
+        if query_params.sort_by not in valid_sort_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort_by field: {query_params.sort_by}",
+            )
+
+        sort_column = getattr(Order, query_params.sort_by)
+        order_expression = asc if order_by == "asc" else desc
+
+        filters = [Order.event_id == event_id]
+
+        if query_params.order_number:
+            filters.append(Order.order_number == query_params.order_number)
+
+        if query_params.status:
+            filters.append(Order.status == query_params.status)
+
+        offset = (page - 1) * page_size
+        count_stmt = select(func.count()).select_from(Order).where(*filters)
+        total_count_result = await session.execute(count_stmt)
+        total_count = total_count_result.scalar_one()
+
+        result = await session.execute(
+            select(Order)
+            .where(*filters)
+            .order_by(order_expression(sort_column))
+            .offset(offset)
+            .limit(page_size)
+        )
+        orders = result.scalars().all()
+
+        response_orders = [
+            MyOrderListItem(
+                order_number=order.order_number,
+                status=order.status,
+                total_amount=order.total_amount,
+                paid_at=order.paid_at,
+            )
+            for order in orders
+        ]
+        total_pages = (total_count + page_size - 1) // page_size
+
+        return PaginatedDataResponse[MyOrderListItem](
+            total_count=total_count,
+            total_pages=total_pages,
+            current_page=page,
+            data=response_orders,
+        )
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
