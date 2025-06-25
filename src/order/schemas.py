@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -33,3 +35,29 @@ class CreateOrderResponse(BaseModel):
     order_number: str
     payment_status: str
     payment_message: str
+
+
+class MyOrderListItem(BaseModel):
+    order_number: str
+    status: str
+    total_amount: float
+    paid_at: datetime | None
+
+
+class MyOrderListResponse(BaseModel):
+    orders: list[MyOrderListItem]
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "orders": [
+                    {
+                        "order_number": "test_order_number",
+                        "status": "test_status",
+                        "total_amount": 100,
+                        "paid_at": "2023-01-01T00:00:00",
+                    }
+                ]
+            }
+        }
+    }
