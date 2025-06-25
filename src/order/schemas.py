@@ -1,6 +1,10 @@
 from datetime import datetime
+from typing import Annotated, Literal
 
+from fastapi import Query
 from pydantic import BaseModel
+
+from src.schemas import BasicQueryParams
 
 
 class CardHolder(BaseModel):
@@ -35,6 +39,17 @@ class CreateOrderResponse(BaseModel):
     order_number: str
     payment_status: str
     payment_message: str
+
+
+class GetMyOrderListQueryParams(BasicQueryParams):
+    order_number: Annotated[str | None, Query()] = None
+
+    sort_by: Annotated[
+        Literal["created_at", "updated_at"],
+        Query(description="Field to sort by", examples=["created_at"]),
+    ] = "created_at"
+
+    model_config = {"extra": "forbid"}
 
 
 class MyOrderListItem(BaseModel):

@@ -5,6 +5,7 @@ from fastapi import (
     Depends,
     HTTPException,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +16,8 @@ from src.models import User
 from src.order.schemas import (
     CreateOrderRequest,
     CreateOrderResponse,
-    MyOrderListResponse,
+    GetMyOrderListQueryParams,
+    MyOrderListItem,
     OrderDetailResponse,
 )
 from src.order.service import (
@@ -23,6 +25,7 @@ from src.order.service import (
     get_my_orders,
     get_order_detail,
 )
+from src.schemas import PaginatedDataResponse
 
 router = APIRouter(
     tags=["order"],
@@ -51,13 +54,16 @@ async def _create_credit_card_order(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
 
-@router.get("/orders/my", response_model=MyOrderListResponse)
+@router.get("/orders/my", response_model=PaginatedDataResponse[MyOrderListItem])
 async def _get_my_orders(
+    query_params: Annotated[GetMyOrderListQueryParams, Query()],
     session: Annotated[AsyncSession, Depends(get_db_session)],
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     try:
-        return await get_my_orders(session=session, current_user=current_user)
+        return await get_my_orders(
+            query_params=query_params, session=session, current_user=current_user
+        )
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
