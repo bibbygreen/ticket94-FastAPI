@@ -1,11 +1,16 @@
 import asyncio
 from logging.config import fileConfig
+from pathlib import Path
 
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 from src.config import settings
 from src.models import Base
+
+env_path = Path(__file__).resolve().parent.parent / "env" / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
