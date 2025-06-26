@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.post("/admin/seats/release-exxpired")
+@router.post("/admin/seats/release-expired")
 async def _release_expired_temp_hold_seats(
     session: Annotated[AsyncSession, Depends(get_db_session)],
     current_user: Annotated[User, Depends(get_admin_user)],
