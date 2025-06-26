@@ -11,6 +11,7 @@ from src.constants import DEFAULT_ERROR_RESPONSE
 from src.event.router import router as event_router
 from src.logger import logger
 from src.order.router import router as order_router
+from src.schedule import start_seat_cleanup_scheduler
 from src.seat_init.router import router as seat_init_router
 from src.seat_maintenance.router import router as seat_maintenance_router
 from src.seat_management.router import router as seat_management_router
@@ -20,6 +21,10 @@ from src.seat_management.router import router as seat_management_router
 async def lifespan(app: FastAPI):
     try:
         logger.info("Starting application")
+
+        start_seat_cleanup_scheduler()
+        logger.info("Seat cleanup scheduler started.")
+
     except Exception as e:
         logger.exception(f"run_migrations failed, error: {e}")
     yield
