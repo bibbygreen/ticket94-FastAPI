@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.constants import SeatStatus
 from src.models import Event, Seat, SeatingRow, Section
 from src.seat_init.schemas import CreateSectionRequest, InitializeSeatsRequest
 
@@ -61,7 +62,11 @@ async def initialize_seats_by_admin(
             await session.flush()  # 拿到 row_id
 
             seats = [
-                Seat(row_id=seating_row.row_id, seat_number=str(i + 1).zfill(2))
+                Seat(
+                    row_id=seating_row.row_id,
+                    seat_number=str(i + 1).zfill(2),
+                    status=SeatStatus.VACANT.value,
+                )
                 for i in range(row_data.seat_count)
             ]
             session.add_all(seats)
