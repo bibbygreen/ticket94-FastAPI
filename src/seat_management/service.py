@@ -45,7 +45,7 @@ async def get_seat_map_by_section(
                 SeatStatusResponse(
                     seat_id=seat.seat_id,
                     seat_number=seat.seat_number,
-                    status=seat.status.value,
+                    status=seat.status,
                 )
                 for seat in seats
             ]
