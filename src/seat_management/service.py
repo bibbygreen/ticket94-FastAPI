@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -75,7 +75,7 @@ async def hold_seats(
     current_user: User,
 ):
     try:
-        now = datetime.now()
+        now = datetime.now(UTC).replace(tzinfo=None)
         hold_until = now + timedelta(minutes=10)
 
         result = await session.execute(

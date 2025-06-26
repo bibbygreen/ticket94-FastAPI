@@ -15,11 +15,11 @@ async def release_expired_temp_hold_seats(session: AsyncSession) -> int:
         stmt = (
             update(Seat)
             .where(
-                Seat.status == SeatStatus.TEMP_HOLD,
+                Seat.status == SeatStatus.TEMP_HOLD.value,
                 Seat.hold_expires_at < now,
             )
             .values(
-                status=SeatStatus.VACANT,
+                status=SeatStatus.VACANT.value,
                 user_id=None,
                 hold_expires_at=None,
             )
