@@ -12,6 +12,7 @@ from src.event.router import router as event_router
 from src.logger import logger
 from src.order.router import router as order_router
 from src.seat_init.router import router as seat_init_router
+from src.seat_maintenance.router import router as seat_maintenance_router
 from src.seat_management.router import router as seat_management_router
 
 
@@ -69,3 +70,4 @@ app.include_router(event_router)
 app.include_router(seat_init_router)
 app.include_router(seat_management_router)
 app.include_router(order_router)
+app.include_router(seat_maintenance_router)
