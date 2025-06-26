@@ -13,7 +13,7 @@ from src.seat_init.service import (
     initialize_seats_by_admin,
 )
 
-router = APIRouter(tags=["Seat Initialization"])
+router = APIRouter(tags=["seat initialization"])
 
 
 @router.post("/admin/events/{event_id}/sections", response_model=DetailResponse)
